@@ -1,104 +1,179 @@
-# To-Do-List-Application
+# **To-Do List Application (GUI Version)**
 
-This is a basic command-line To-Do List application written in Python. It allows users to manage their daily tasks by adding, viewing, marking as complete, and deleting tasks. All tasks are saved to a plain text file (tasks.txt) for persistence across sessions.
+A simple and user-friendly **Graphical To-Do List Application** built using **Python (Tkinter)**.
+This app allows you to add, edit, mark complete/incomplete, delete, and refresh tasks.
+All tasks are saved automatically to a `tasks.txt` file, making them persist across sessions.
 
-## Features
-Add Tasks: Quickly add new tasks to your list.
+---
 
-View Tasks: See all your tasks with their current completion status.
+## **Features**
 
-Mark Tasks Complete: Mark tasks as done.
+### ✔ Add Tasks
 
-Delete Tasks: Remove tasks from your list.
+Enter a task in the input box and click **Add Task** or press **Enter**.
 
-Persistence: Tasks are automatically saved to tasks.txt and loaded when the application starts, so you don't lose your data.
+### ✔ View Tasks
 
-## How to Run
-Save the Code:
-Save the provided Python code into a file named todo_app.py (or any other .py extension).
+Tasks appear in a scrollable list with a checkmark (✓) for completed tasks.
 
-Open a Terminal/Command Prompt:
-Navigate to the directory where you saved todo_app.py using your terminal or command prompt.
+### ✔ Mark as Complete / Incomplete
 
-Run the Application:
-Execute the script using Python:
+Select a task and click:
 
+* **Mark Complete**
+* **Mark Incomplete**
+
+You can also **double-click a task** to toggle completion.
+
+### ✔ Edit Task
+
+Select a task → click **Edit** → update the text.
+
+### ✔ Delete Task
+
+Select a task → click **Delete**
+A confirmation message appears before removing the task.
+
+### ✔ Refresh Tasks
+
+Loads tasks again from `tasks.txt` and refreshes the list.
+
+### ✔ Persistent Storage
+
+Tasks are saved in `tasks.txt` using the format:
+
+```
+description|True/False
+```
+
+---
+
+## 📂 **File Structure**
+
+```
+project_folder/
+│── todo_app.py          # Main application file
+│── tasks.txt            # Automatically created storage file
+```
+
+* The file `tasks.txt` is created automatically if it does not already exist.
+* Each line contains one task with its completion state.
+
+---
+
+## ▶️ **How to Run the Application**
+
+### **1. Save the code**
+
+Save the script as:
+
+```
+todo_app.py
+```
+
+### **2. Install Python (if not installed)**
+
+Python 3.x is required.
+
+### **3. Run the Application**
+
+Open terminal / CMD inside the folder and run:
+
+```
 python todo_app.py
+```
 
-## How to Use
-Once the application is running, you will see a menu with several options:
+The graphical To-Do List window will appear.
 
---- To-Do List Menu ---
-1. View tasks
-2. Add task
-3. Mark task complete
-4. Delete task
-5. Exit
-Enter your choice:
+---
 
-Enter the number corresponding to the action you want to perform and press Enter:
+## 🖥️ **How to Use the Application**
 
-1. View tasks: Displays all tasks currently in your list, showing a ✓ next to completed tasks.
+### **1. Add a Task**
 
-2. Add task: Prompts you to enter the description for a new task.
+* Type a task in the entry box.
+* Press **Enter** or click **Add Task**.
 
-3. Mark task complete: Shows your current tasks and asks for the number of the task you wish to mark as complete.
+### **2. Select a Task**
 
-4. Delete task: Shows your current tasks and asks for the number of the task you wish to delete.
+Click once on a task from the list.
 
-5. Exit: Closes the application. Your tasks will be saved automatically.
+### **3. Mark Complete / Incomplete**
 
-## Example Usage:
-Run the app:
+Click:
 
-python todo_app.py
+* **Mark Complete**
+* **Mark Incomplete**
 
-Add a task:
+Or double-click the task to toggle.
 
-Enter your choice: 2
-Enter the task description: Buy groceries
-Task 'Buy groceries' added.
+### **4. Edit a Task**
 
-Add another task:
+* Select a task
+* Click **Edit**
+* Modify the description
 
-Enter your choice: 2
-Enter the task description: Finish report
-Task 'Finish report' added.
+### **5. Delete a Task**
 
-View tasks:
+* Select a task
+* Click **Delete**
+* Confirm deletion
 
-Enter your choice: 1
+### **6. Refresh**
 
---- Your To-Do List ---
-1. [ ] Buy groceries
-2. [ ] Finish report
------------------------
+Reload tasks from the file using **Refresh**.
 
-Mark a task complete:
+---
 
-Enter your choice: 3
+## 🛠️ **Behind the Scenes — How it Works**
 
---- Your To-Do List ---
-1. [ ] Buy groceries
-2. [ ] Finish report
------------------------
+### **Loading Tasks**
 
-Enter the number of the task to mark as complete: 1
-Task 1 marked as complete.
+The function `load_tasks()` reads tasks from `tasks.txt` and populates them into a list of dictionaries like:
 
-View tasks again:
+```python
+{"description": "Buy milk", "completed": False}
+```
 
-Enter your choice: 1
+### **Saving Tasks**
 
---- Your To-Do List ---
-1. [✓] Buy groceries
-2. [ ] Finish report
------------------------
+Every time you:
 
-Exit the application:
+* Add
+* Edit
+* Mark complete/incomplete
+* Delete
 
-Enter your choice: 5
-Exiting To-Do List. Goodbye!
+…the file is updated with the new state via `save_tasks()`.
 
-## File Structure
-The application will create a file named tasks.txt in the same directory where todo_app.py is located. This file stores your tasks, with each task on a new line in the format description|completed_status (e.g., Buy groceries|True). You generally won't need to interact with this file directly.
+### **GUI**
+
+Built using **Tkinter** widgets:
+
+* `Entry` for input
+* `Listbox` for tasks
+* Buttons for actions
+* Scrollbar
+* Status bar showing messages like *"Added: Task"*
+
+---
+
+## 📌 Example of How Tasks Appear in the App
+
+```
+  1. [✓] Buy groceries
+  2. [ ] Finish project report
+  3. [ ] Pay electricity bill
+```
+
+---
+
+## ✔ Requirements
+
+* Python 3.x
+* Tkinter (comes pre-installed with Python on Windows/macOS/Linux)
+
+---
+
+## Screenshots
+
