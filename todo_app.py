@@ -1,148 +1,185 @@
 import os
+import tkinter as tk
+from tkinter import messagebox, simpledialog
 
-# Define the file where tasks will be saved
-# Tasks are stored one per line: "description|completed_status" (e.g., "Buy groceries|False")
 TASKS_FILE = "tasks.txt"
-
 def load_tasks():
-    """
-    Loads tasks from the TXT file. Each line is parsed into a dictionary.
-    Handles file not found or malformed lines gracefully.
-    """
     tasks = []
     if not os.path.exists(TASKS_FILE):
-        return tasks # Return empty list if file doesn't exist yet
-
+        return tasks
     try:
-        with open(TASKS_FILE, 'r') as file:
-            for line in file:
-                line = line.strip() # Remove newline characters and whitespace
-                if not line: # Skip empty lines
+        with open(TASKS_FILE, "r") as f:
+            for line in f:
+                line = line.rstrip("\n\r")
+                if not line:
                     continue
-
-                parts = line.split('|', 1) # Split only on the first '|' to allow '|' in description
+                parts = line.split("|", 1)  # only split on first |
                 if len(parts) == 2:
-                    description = parts[0]
-                    # Convert the string "True" or "False" to a boolean value
-                    completed = parts[1].lower() == 'true'
-                    tasks.append({"description": description, "completed": completed})
-                else:
-                    # Inform about malformed lines but continue loading valid ones
-                    print(f"Warning: Skipping malformed task line: '{line}'")
+                    desc = parts[0]
+                    completed = parts[1].strip().lower() == "true"
+                    tasks.append({"description": desc, "completed": completed})
     except Exception as e:
-        # Catch any other file reading errors
-        print(f"Error loading tasks from {TASKS_FILE}: {e}. Starting with an empty task list.")
-        return [] # Return empty list on error to prevent application crash
+        print("Failed to read tasks:", e)
     return tasks
 
+
 def save_tasks(tasks):
-    """
-    Saves the current list of tasks to the TXT file.
-    Each task is written on a new line in the "description|completed_status" format.
-    """
-    with open(TASKS_FILE, 'w') as file:
-        for task in tasks:
-            # Format each task as a string and write to file with a newline
-            file.write(f"{task['description']}|{task['completed']}\n")
-
-def display_tasks(tasks):
-    """
-    Displays all tasks in a formatted list.
-    Shows a checkmark for completed tasks.
-    """
-    if not tasks:
-        print("\nNo tasks in your list yet!")
-        return
-
-    print("\n--- Your To-Do List ---")
-    for i, task in enumerate(tasks):
-        # Determine status symbol: '✓' for complete, ' ' for incomplete
-        status = "✓" if task["completed"] else " "
-        print(f"{i + 1}. [{status}] {task['description']}")
-    print("-----------------------\n")
-
-def add_task(tasks):
-    """
-    Prompts the user for a new task description and adds it to the list.
-    New tasks are always added as incomplete.
-    """
-    description = input("Enter the task description: ").strip()
-    if description:
-        tasks.append({"description": description, "completed": False})
-        save_tasks(tasks) # Save immediately after adding
-        print(f"Task '{description}' added.")
-    else:
-        print("Task description cannot be empty.")
-
-def mark_task_complete(tasks):
-    """
-    Allows the user to mark an existing task as complete by its number.
-    """
-    display_tasks(tasks) # Show tasks so user can pick
-    if not tasks: # No tasks to mark
-        return
-
     try:
-        task_num = int(input("Enter the number of the task to mark as complete: "))
-        # Adjust for 0-based indexing
-        if 1 <= task_num <= len(tasks):
-            tasks[task_num - 1]["completed"] = True
-            save_tasks(tasks) # Save immediately after updating
-            print(f"Task {task_num} marked as complete.")
-        else:
-            print("Invalid task number. Please enter a number from the list.")
-    except ValueError:
-        print("Invalid input. Please enter a number.")
+        with open(TASKS_FILE, "w") as f:
+            for t in tasks:
+                desc = t["description"].replace("\n", " ")
+                f.write(f"{desc}|{t['completed']}\n")
+    except Exception as e:
+        messagebox.showerror("Save error", f"Could not save tasks: {e}")
 
-def delete_task(tasks):
-    """
-    Allows the user to delete an existing task by its number.
-    """
-    display_tasks(tasks) # Show tasks so user can pick
-    if not tasks: # No tasks to delete
-        return
+# ------------------ GUI ------------------
 
-    try:
-        task_num = int(input("Enter the number of the task to delete: "))
-        # Adjust for 0-based indexing
-        if 1 <= task_num <= len(tasks):
-            deleted_task = tasks.pop(task_num - 1) # Remove the task
-            save_tasks(tasks) # Save immediately after deleting
-            print(f"Task '{deleted_task['description']}' deleted.")
-        else:
-            print("Invalid task number. Please enter a number from the list.")
-    except ValueError:
-        print("Invalid input. Please enter a number.")
+class TodoApp(tk.Tk):
+    def __init__(self):
+        super().__init__()
+        self.title("To-Do List")
+        self.geometry("560x420")
+        self.resizable(False, False)
+
+        self.tasks = []
+
+        self._build_widgets()
+        self.load_and_refresh()
+
+    def _build_widgets(self):
+        top_frame = tk.Frame(self, pady=8, padx=8)
+        top_frame.pack(fill="x")
+
+        self.entry = tk.Entry(top_frame)
+        self.entry.pack(side="left", fill="x", expand=True, padx=(0, 6))
+        self.entry.bind("<Return>", lambda e: self.on_add())
+
+        add_btn = tk.Button(top_frame, text="Add Task", command=self.on_add)
+        add_btn.pack(side="left")
+
+        list_frame = tk.Frame(self, padx=8)
+        list_frame.pack(fill="both", expand=True)
+
+        self.listbox = tk.Listbox(list_frame, height=16, activestyle="none", font=("Segoe UI", 10))
+        self.listbox.pack(side="left", fill="both", expand=True)
+        self.listbox.bind('<Double-Button-1>', self.on_toggle_complete)
+
+        scrollbar = tk.Scrollbar(list_frame, orient="vertical", command=self.listbox.yview)
+        scrollbar.pack(side="left", fill="y")
+        self.listbox.config(yscrollcommand=scrollbar.set)
+
+        btn_frame = tk.Frame(self, pady=6, padx=8)
+        btn_frame.pack(fill="x")
+
+        tk.Button(btn_frame, text="Mark Complete", command=self.on_mark_complete).pack(side="left", padx=4)
+        tk.Button(btn_frame, text="Mark Incomplete", command=self.on_mark_incomplete).pack(side="left", padx=4)
+        tk.Button(btn_frame, text="Edit", command=self.on_edit_task).pack(side="left", padx=4)
+        tk.Button(btn_frame, text="Delete", command=self.on_delete).pack(side="left", padx=4)
+        tk.Button(btn_frame, text="Refresh", command=self.load_and_refresh).pack(side="left", padx=4)
+
+        self.status_var = tk.StringVar()
+        status = tk.Label(self, textvariable=self.status_var, anchor="w", relief="sunken")
+        status.pack(side="bottom", fill="x")
+
+    # ------------------ Data / Display helpers ------------------
+    def load_and_refresh(self):
+        """Load tasks from disk and update the listbox."""
+        self.tasks = load_tasks()
+        self.refresh_display()
+        self.status_var.set(f"{len(self.tasks)} tasks loaded from {TASKS_FILE}.")
+
+    def refresh_display(self):
+        """Redraw the listbox to reflect self.tasks."""
+        self.listbox.delete(0, tk.END)
+        for i, t in enumerate(self.tasks, start=1):
+            mark = "✓" if t["completed"] else " "
+            self.listbox.insert(tk.END, f"{i:>3}. [{mark}] {t['description']}")
+
+    def get_selected_index(self):
+        sel = self.listbox.curselection()
+        return sel[0] if sel else None
+
+    # ------------------ Actions ------------------
+    def on_add(self):
+        desc = self.entry.get().strip()
+        if not desc:
+            messagebox.showwarning("Empty", "Please type a task before adding.")
+            return
+        self.tasks.append({"description": desc, "completed": False})
+        save_tasks(self.tasks)
+        self.entry.delete(0, tk.END)
+        self.refresh_display()
+        self.status_var.set(f"Added: {desc}")
+
+    def on_mark_complete(self):
+        idx = self.get_selected_index()
+        if idx is None:
+            messagebox.showinfo("Select", "Select a task first.")
+            return
+        self.tasks[idx]["completed"] = True
+        save_tasks(self.tasks)
+        self.refresh_display()
+        self.status_var.set(f"Task {idx+1} marked complete.")
+
+    def on_mark_incomplete(self):
+        idx = self.get_selected_index()
+        if idx is None:
+            messagebox.showinfo("Select", "Select a task first.")
+            return
+        self.tasks[idx]["completed"] = False
+        save_tasks(self.tasks)
+        self.refresh_display()
+        self.status_var.set(f"Task {idx+1} marked incomplete.")
+
+    def on_delete(self):
+        idx = self.get_selected_index()
+        if idx is None:
+            messagebox.showinfo("Select", "Select a task to delete.")
+            return
+        desc = self.tasks[idx]["description"]
+        if not messagebox.askyesno("Confirm", f"Delete: {desc} ?"):
+            return
+        self.tasks.pop(idx)
+        save_tasks(self.tasks)
+        self.refresh_display()
+        self.status_var.set(f"Deleted: {desc}")
+
+    def on_edit_task(self):
+        idx = self.get_selected_index()
+        if idx is None:
+            messagebox.showinfo("Select", "Select a task to edit.")
+            return
+        old = self.tasks[idx]["description"]
+        new = simpledialog.askstring("Edit", "Edit description:", initialvalue=old)
+        if new is None:
+            return
+        new = new.strip()
+        if not new:
+            messagebox.showwarning("Empty", "Description cannot be empty.")
+            return
+        self.tasks[idx]["description"] = new
+        save_tasks(self.tasks)
+        self.refresh_display()
+        self.status_var.set(f"Edited task {idx+1}.")
+
+    def on_toggle_complete(self, event=None):
+        idx = self.get_selected_index()
+        if idx is None:
+            return
+        self.tasks[idx]["completed"] = not self.tasks[idx]["completed"]
+        save_tasks(self.tasks)
+        self.refresh_display()
+        self.status_var.set(f"Toggled task {idx+1}.")
+
+# ------------------ Run ------------------
 
 def main():
-    """
-    The main function that runs the To-Do List application loop.
-    It loads tasks, presents a menu, and calls appropriate functions based on user choice.
-    """
-    tasks = load_tasks() # Load tasks when the application starts
+    if not os.path.exists(TASKS_FILE):
+        open(TASKS_FILE, "a").close()
 
-    while True:
-        print("\n--- To-Do List Menu ---")
-        print("1. View tasks")
-        print("2. Add task")
-        print("3. Mark task complete")
-        print("4. Delete task")
-        print("5. Exit")
-        choice = input("Enter your choice: ").strip() # Get user input and remove whitespace
+    app = TodoApp()
+    app.mainloop()
 
-        if choice == '1':
-            display_tasks(tasks)
-        elif choice == '2':
-            add_task(tasks)
-        elif choice == '3':
-            mark_task_complete(tasks)
-        elif choice == '4':
-            delete_task(tasks)
-        elif choice == '5':
-            print("Exiting To-Do List. Goodbye!")
-            break # Exit the loop and end the program
-        else:
-            print("Invalid choice. Please enter a number from 1 to 5.")
 
 if __name__ == "__main__":
-    main() # Run the main application function when the script is executed
+    main()
